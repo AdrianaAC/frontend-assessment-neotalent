@@ -16,6 +16,7 @@ export default function FilterBar({
   return (
     <section className="toolbar">
       <select
+        aria-label="Make filter"
         value={filters.make}
         onChange={(e) => onChange({ ...filters, make: e.target.value })}
       >
@@ -29,6 +30,7 @@ export default function FilterBar({
 
       <input
         type="text"
+        aria-label="Model filter"
         placeholder="Filter by model"
         value={filters.model}
         onChange={(e) => onChange({ ...filters, model: e.target.value })}
@@ -36,6 +38,7 @@ export default function FilterBar({
 
       <input
         type="number"
+        aria-label="Minimum bid"
         placeholder="Min bid"
         value={filters.minBid}
         onChange={(e) => onChange({ ...filters, minBid: e.target.value })}
@@ -43,6 +46,7 @@ export default function FilterBar({
 
       <input
         type="number"
+        aria-label="Maximum bid"
         placeholder="Max bid"
         value={filters.maxBid}
         onChange={(e) => onChange({ ...filters, maxBid: e.target.value })}

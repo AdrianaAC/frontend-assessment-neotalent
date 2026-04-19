@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import type { Vehicle } from "../types/vehicle";
-import { getTimeUntilAuction } from "../utils/date";
+import { getAuctionCountdownLabel } from "../utils/date";
+import {
+  formatCurrency,
+  formatDateTime,
+  formatNumber,
+} from "../utils/format";
 
 type Props = {
   vehicle: Vehicle;
@@ -8,54 +13,67 @@ type Props = {
 };
 
 export default function VehicleCard({ vehicle, onToggleFavourite }: Props) {
-  const { days, hours } = getTimeUntilAuction(vehicle.auctionDateTime);
+  const auctionCountdown = getAuctionCountdownLabel(vehicle.auctionDateTime);
 
   return (
     <div className="vehicle-card">
       <Link to={`/vehicle/${vehicle.id}`} className="vehicle-card__link">
         <div className="vehicle-card__image">
-          <span>Image placeholder</span>
+          <div className="vehicle-card__image-overlay">
+            <span className="vehicle-card__image-label">Image placeholder</span>
+            <span className="vehicle-card__countdown">{auctionCountdown}</span>
+          </div>
         </div>
 
         <div className="vehicle-card__content">
-          <h2>
-            {vehicle.make} {vehicle.model}
-          </h2>
+          <div className="vehicle-card__header">
+            <div>
+              <p className="vehicle-card__eyebrow">{vehicle.make}</p>
+              <h2>
+                {vehicle.make} {vehicle.model}
+              </h2>
+            </div>
+            {vehicle.favourite ? (
+              <span className="vehicle-card__badge">Favourite</span>
+            ) : null}
+          </div>
 
-          <p>
-            <strong>Year:</strong> {vehicle.year}
-          </p>
-          <p>
-            <strong>Engine:</strong> {vehicle.engineSize}
-          </p>
-          <p>
-            <strong>Fuel:</strong> {vehicle.fuelType}
-          </p>
-          <p>
-            <strong>Mileage:</strong> {vehicle.mileage.toLocaleString()}
-          </p>
-          <p>
-            <strong>Starting Bid:</strong> £{vehicle.startingBid.toLocaleString()}
-          </p>
-          <p>
-            <strong>Auction:</strong>{" "}
-            {new Date(vehicle.auctionDateTime).toLocaleString()}
-          </p>
-          <p>
-            <strong>Starts in:</strong> {days} days, {hours} hours
-          </p>
+          <div className="vehicle-card__meta">
+            <span>{vehicle.year}</span>
+            <span>{vehicle.engineSize}</span>
+            <span>{vehicle.fuelType}</span>
+          </div>
+
+          <dl className="vehicle-card__stats">
+            <div>
+              <dt>Starting bid</dt>
+              <dd>{formatCurrency(vehicle.startingBid)}</dd>
+            </div>
+            <div>
+              <dt>Mileage</dt>
+              <dd>{formatNumber(vehicle.mileage)} mi</dd>
+            </div>
+            <div>
+              <dt>Auction date</dt>
+              <dd>{formatDateTime(vehicle.auctionDateTime)}</dd>
+            </div>
+            <div>
+              <dt>Starts in</dt>
+              <dd>{auctionCountdown}</dd>
+            </div>
+          </dl>
         </div>
       </Link>
 
       <button
         type="button"
-        className="favourite-btn"
+        className={`favourite-btn${vehicle.favourite ? " favourite-btn--active" : ""}`}
         onClick={() => onToggleFavourite(vehicle.id)}
         aria-label={
           vehicle.favourite ? "Remove from favourites" : "Add to favourites"
         }
       >
-        {vehicle.favourite ? "★ Favourite" : "☆ Favourite"}
+        {vehicle.favourite ? "Saved to favourites" : "Save to favourites"}
       </button>
     </div>
   );

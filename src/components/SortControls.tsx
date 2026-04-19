@@ -16,6 +16,7 @@ export default function SortControls({
   return (
     <section className="toolbar">
       <select
+        aria-label="Sort field"
         value={sortField}
         onChange={(e) => onFieldChange(e.target.value as SortField)}
       >
@@ -26,6 +27,7 @@ export default function SortControls({
       </select>
 
       <select
+        aria-label="Sort direction"
         value={sortDirection}
         onChange={(e) => onDirectionChange(e.target.value as SortDirection)}
       >

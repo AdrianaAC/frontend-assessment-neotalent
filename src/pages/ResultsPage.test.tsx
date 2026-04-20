@@ -1,8 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { describe, expect, it } from "vitest";
 import { VehicleProvider } from "../context/VehicleContext";
+import { GlobalStyle } from "../styles/GlobalStyle";
+import { theme } from "../styles/theme";
 import type { Vehicle } from "../types/vehicle";
 import { buildVehicle } from "../test/vehicleTestUtils";
 import ResultsPage from "./ResultsPage";
@@ -33,10 +36,13 @@ function LocationDisplay() {
 function renderResultsPage(initialEntry = "/") {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
-      <VehicleProvider initialVehicles={testVehicles}>
-        <ResultsPage />
-        <LocationDisplay />
-      </VehicleProvider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyle />
+        <VehicleProvider initialVehicles={testVehicles} persistFavourites={false}>
+          <ResultsPage />
+          <LocationDisplay />
+        </VehicleProvider>
+      </ThemeProvider>
     </MemoryRouter>
   );
 }
@@ -175,5 +181,17 @@ describe("ResultsPage", () => {
     expect(screen.getByLabelText(/vehicles per page/i)).toHaveValue("12");
     expect(screen.getByRole("checkbox", { name: /favourites only/i })).not.toBeChecked();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
+  });
+
+  it("lets the user remove an active filter from the filter chips", async () => {
+    const user = userEvent.setup();
+
+    renderResultsPage("/?make=Ford&model=Focus");
+
+    await user.click(screen.getByRole("button", { name: /model: focus/i }));
+
+    expect(screen.getByLabelText(/model filter/i)).toHaveValue("");
+    expect(screen.getByRole("heading", { level: 2, name: "Ford Fiesta" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Ford Focus" })).toBeInTheDocument();
   });
 });

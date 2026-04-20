@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -15,6 +16,7 @@ type VehicleContextValue = {
 };
 
 const VehicleContext = createContext<VehicleContextValue | undefined>(undefined);
+const FAVOURITES_STORAGE_KEY = "neotalent-vehicle-favourites";
 
 function normalizeVehicles(data: Omit<Vehicle, "id">[]): Vehicle[] {
   return data.map((vehicle) => ({
@@ -23,17 +25,54 @@ function normalizeVehicles(data: Omit<Vehicle, "id">[]): Vehicle[] {
   }));
 }
 
+function loadFavouriteIds() {
+  if (typeof window === "undefined") {
+    return new Set<string>();
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(FAVOURITES_STORAGE_KEY);
+
+    if (!rawValue) {
+      return new Set<string>();
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+
+    return Array.isArray(parsedValue)
+      ? new Set(parsedValue.filter((value): value is string => typeof value === "string"))
+      : new Set<string>();
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function applyPersistedFavourites(vehicles: Vehicle[]) {
+  const favouriteIds = loadFavouriteIds();
+
+  return vehicles.map((vehicle) => ({
+    ...vehicle,
+    favourite: favouriteIds.has(vehicle.id) ? true : vehicle.favourite,
+  }));
+}
+
 type VehicleProviderProps = {
   children: ReactNode;
   initialVehicles?: Vehicle[];
+  persistFavourites?: boolean;
 };
 
 export function VehicleProvider({
   children,
   initialVehicles,
+  persistFavourites = initialVehicles === undefined,
 }: VehicleProviderProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>(() =>
-    initialVehicles ?? normalizeVehicles(vehiclesData as Omit<Vehicle, "id">[])
+    persistFavourites
+      ? applyPersistedFavourites(
+          initialVehicles ?? normalizeVehicles(vehiclesData as Omit<Vehicle, "id">[])
+        )
+      : initialVehicles ?? normalizeVehicles(vehiclesData as Omit<Vehicle, "id">[])
   );
 
   function toggleFavourite(id: string) {
@@ -45,6 +84,21 @@ export function VehicleProvider({
       )
     );
   }
+
+  useEffect(() => {
+    if (!persistFavourites || typeof window === "undefined") {
+      return;
+    }
+
+    const favouriteIds = vehicles
+      .filter((vehicle) => vehicle.favourite)
+      .map((vehicle) => vehicle.id);
+
+    window.localStorage.setItem(
+      FAVOURITES_STORAGE_KEY,
+      JSON.stringify(favouriteIds)
+    );
+  }, [persistFavourites, vehicles]);
 
   const value = useMemo(
     () => ({
@@ -67,4 +121,8 @@ export function useVehicles() {
   }
 
   return context;
+}
+
+export function getFavouritesStorageKey() {
+  return FAVOURITES_STORAGE_KEY;
 }

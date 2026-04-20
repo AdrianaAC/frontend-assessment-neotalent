@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import styled from "styled-components";
 import FilterBar from "../components/FilterBar";
 import SortControls from "../components/SortControls";
 import VehicleCard from "../components/VehicleCard";
@@ -25,6 +26,55 @@ const allowedSortFields: SortField[] = [
 const allowedSortDirections: SortDirection[] = ["asc", "desc"];
 const allowedPageSizes = [6, 12, 24];
 
+const HeaderMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+`;
+
+const HeaderBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: ${({ theme }) => theme.colors.chipText};
+  font-size: 0.92rem;
+  font-weight: 600;
+`;
+
+const ActiveFilters = styled.section`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 22px;
+`;
+
+const FilterChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.surfaceSoft};
+  color: ${({ theme }) => theme.colors.chipText};
+  cursor: pointer;
+  font-weight: 600;
+`;
+
+const StatusNote = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.95rem;
+`;
+
 function getSortField(value: string | null): SortField {
   return allowedSortFields.includes(value as SortField)
     ? (value as SortField)
@@ -45,6 +95,26 @@ function getPageSize(value: string | null) {
 function getPage(value: string | null) {
   const parsedValue = Number(value);
   return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : 1;
+}
+
+function buildActiveFilters(filters: Filters) {
+  return [
+    filters.make
+      ? { key: "make", label: `Make: ${filters.make}` }
+      : null,
+    filters.model
+      ? { key: "model", label: `Model: ${filters.model}` }
+      : null,
+    filters.minBid
+      ? { key: "minBid", label: `Min bid: ${filters.minBid}` }
+      : null,
+    filters.maxBid
+      ? { key: "maxBid", label: `Max bid: ${filters.maxBid}` }
+      : null,
+    filters.favouritesOnly
+      ? { key: "favouritesOnly", label: "Favourites only" }
+      : null,
+  ].filter((value): value is { key: keyof Filters; label: string } => value !== null);
 }
 
 export default function ResultsPage() {
@@ -88,6 +158,11 @@ export default function ResultsPage() {
     const startIndex = (currentPage - 1) * vehiclesPerPage;
     return visibleVehicles.slice(startIndex, startIndex + vehiclesPerPage);
   }, [currentPage, vehiclesPerPage, visibleVehicles]);
+  const activeFilters = useMemo(() => buildActiveFilters(filters), [filters]);
+  const favouriteCount = useMemo(
+    () => vehicles.filter((vehicle) => vehicle.favourite).length,
+    [vehicles]
+  );
 
   function updateSearchParams(
     updates: Partial<Filters> & {
@@ -135,9 +210,17 @@ export default function ResultsPage() {
     <main className="page">
       <header className="page-header">
         <h1>Vehicle Results</h1>
-        <p>
-          Showing {visibleVehicles.length} of {totalVehicles} vehicles
-        </p>
+        <HeaderMeta>
+          <p>
+            Showing {visibleVehicles.length} of {totalVehicles} vehicles
+          </p>
+          <HeaderBadge>
+            {favouriteCount} favourites saved on this device
+          </HeaderBadge>
+        </HeaderMeta>
+        <StatusNote>
+          Filters, sorting, and page state stay in the URL, and favourites persist locally.
+        </StatusNote>
       </header>
 
       <FilterBar
@@ -155,6 +238,27 @@ export default function ResultsPage() {
           updateSearchParams({ direction: value, page: 1 })
         }
       />
+
+      {activeFilters.length > 0 ? (
+        <ActiveFilters aria-label="Active filters">
+          {activeFilters.map((filter) => (
+            <FilterChip
+              key={filter.key}
+              type="button"
+              onClick={() =>
+                updateSearchParams({
+                  [filter.key]:
+                    filter.key === "favouritesOnly" ? false : "",
+                  page: 1,
+                } as Partial<Filters> & { page: number })
+              }
+            >
+              {filter.label}
+              <span aria-hidden="true">×</span>
+            </FilterChip>
+          ))}
+        </ActiveFilters>
+      ) : null}
 
       <section className="pagination-toolbar">
         <label className="pagination-toolbar__label">

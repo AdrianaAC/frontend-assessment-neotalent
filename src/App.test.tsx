@@ -1,9 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { describe, expect, it } from "vitest";
 import App from "./App";
 import { VehicleProvider } from "./context/VehicleContext";
+import { GlobalStyle } from "./styles/GlobalStyle";
+import { theme } from "./styles/theme";
 import type { Vehicle } from "./types/vehicle";
 import { buildVehicle } from "./test/vehicleTestUtils";
 
@@ -40,9 +43,12 @@ const appTestVehicles: Vehicle[] = [
 function renderApp(initialEntry = "/") {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
-      <VehicleProvider initialVehicles={appTestVehicles}>
-        <App />
-      </VehicleProvider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyle />
+        <VehicleProvider initialVehicles={appTestVehicles} persistFavourites={false}>
+          <App />
+        </VehicleProvider>
+      </ThemeProvider>
     </MemoryRouter>
   );
 }

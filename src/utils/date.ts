@@ -1,6 +1,8 @@
+import { parseAuctionDate } from "./auctionDate";
+
 export function getTimeUntilAuction(dateString: string) {
   const now = new Date().getTime();
-  const target = new Date(dateString).getTime();
+  const target = parseAuctionDate(dateString).getTime();
   const rawDiff = target - now;
   const diff = Math.max(rawDiff, 0);
 

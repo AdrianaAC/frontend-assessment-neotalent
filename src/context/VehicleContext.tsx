@@ -7,6 +7,7 @@ import {
 } from "react";
 import vehiclesData from "../data/vehicles.json";
 import type { Vehicle } from "../types/vehicle";
+import { generateVehicleId } from "../utils/vehicle";
 
 type VehicleContextValue = {
   vehicles: Vehicle[];
@@ -16,9 +17,9 @@ type VehicleContextValue = {
 const VehicleContext = createContext<VehicleContextValue | undefined>(undefined);
 
 function normalizeVehicles(data: Omit<Vehicle, "id">[]): Vehicle[] {
-  return data.map((vehicle, index) => ({
+  return data.map((vehicle) => ({
     ...vehicle,
-    id: `${vehicle.make}-${vehicle.model}-${vehicle.year}-${index}`,
+    id: generateVehicleId(vehicle),
   }));
 }
 

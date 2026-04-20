@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import FilterBar from "../components/FilterBar";
 import SortControls from "../components/SortControls";
 import VehicleCard from "../components/VehicleCard";
@@ -15,13 +16,60 @@ const defaultFilters: Filters = {
   favouritesOnly: false,
 };
 
+const allowedSortFields: SortField[] = [
+  "make",
+  "startingBid",
+  "mileage",
+  "auctionDateTime",
+];
+const allowedSortDirections: SortDirection[] = ["asc", "desc"];
+const allowedPageSizes = [6, 12, 24];
+
+function getSortField(value: string | null): SortField {
+  return allowedSortFields.includes(value as SortField)
+    ? (value as SortField)
+    : "auctionDateTime";
+}
+
+function getSortDirection(value: string | null): SortDirection {
+  return allowedSortDirections.includes(value as SortDirection)
+    ? (value as SortDirection)
+    : "asc";
+}
+
+function getPageSize(value: string | null) {
+  const parsedValue = Number(value);
+  return allowedPageSizes.includes(parsedValue) ? parsedValue : 12;
+}
+
+function getPage(value: string | null) {
+  const parsedValue = Number(value);
+  return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : 1;
+}
+
 export default function ResultsPage() {
   const { vehicles, toggleFavourite } = useVehicles();
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [sortField, setSortField] = useState<SortField>("auctionDateTime");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [vehiclesPerPage, setVehiclesPerPage] = useState(12);
-  const [currentPage, setCurrentPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+
+  const filters = useMemo<Filters>(
+    () => ({
+      make: searchParams.get("make") ?? defaultFilters.make,
+      model: searchParams.get("model") ?? defaultFilters.model,
+      minBid: searchParams.get("minBid") ?? defaultFilters.minBid,
+      maxBid: searchParams.get("maxBid") ?? defaultFilters.maxBid,
+      favouritesOnly: searchParams.get("favouritesOnly") === "true",
+    }),
+    [searchParams]
+  );
+  const sortField = getSortField(searchParams.get("sort"));
+  const sortDirection = getSortDirection(searchParams.get("direction"));
+  const vehiclesPerPage = getPageSize(searchParams.get("pageSize"));
+  const currentPage = getPage(searchParams.get("page"));
 
   const totalVehicles = useMemo(() => vehicles.length, [vehicles]);
   const makes = useMemo(
@@ -41,13 +89,45 @@ export default function ResultsPage() {
     return visibleVehicles.slice(startIndex, startIndex + vehiclesPerPage);
   }, [currentPage, vehiclesPerPage, visibleVehicles]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, sortDirection, sortField, vehiclesPerPage]);
+  function updateSearchParams(
+    updates: Partial<Filters> & {
+      sort?: SortField;
+      direction?: SortDirection;
+      page?: number;
+      pageSize?: number;
+    }
+  ) {
+    const nextParams = new URLSearchParams(location.search);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (
+        value === undefined ||
+        value === "" ||
+        value === false ||
+        (key === "page" && value === 1) ||
+        (key === "pageSize" && value === 12) ||
+        (key === "sort" && value === "auctionDateTime") ||
+        (key === "direction" && value === "asc")
+      ) {
+        nextParams.delete(key);
+        return;
+      }
+
+      nextParams.set(key, String(value));
+    });
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextParams.toString() ? `?${nextParams.toString()}` : "",
+      },
+      { replace: true }
+    );
+  }
 
   useEffect(() => {
     if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+      updateSearchParams({ page: totalPages });
     }
   }, [currentPage, totalPages]);
 
@@ -63,15 +143,17 @@ export default function ResultsPage() {
       <FilterBar
         filters={filters}
         makes={makes}
-        onChange={setFilters}
-        onClear={() => setFilters(defaultFilters)}
+        onChange={(nextFilters) => updateSearchParams({ ...nextFilters, page: 1 })}
+        onClear={() => navigate({ pathname: location.pathname, search: "" }, { replace: true })}
       />
 
       <SortControls
         sortField={sortField}
         sortDirection={sortDirection}
-        onFieldChange={setSortField}
-        onDirectionChange={setSortDirection}
+        onFieldChange={(value) => updateSearchParams({ sort: value, page: 1 })}
+        onDirectionChange={(value) =>
+          updateSearchParams({ direction: value, page: 1 })
+        }
       />
 
       <section className="pagination-toolbar">
@@ -79,7 +161,12 @@ export default function ResultsPage() {
           Vehicles per page
           <select
             value={vehiclesPerPage}
-            onChange={(event) => setVehiclesPerPage(Number(event.target.value))}
+            onChange={(event) =>
+              updateSearchParams({
+                pageSize: Number(event.target.value),
+                page: 1,
+              })
+            }
           >
             <option value={6}>6</option>
             <option value={12}>12</option>
@@ -109,7 +196,7 @@ export default function ResultsPage() {
       <nav className="pagination" aria-label="Vehicle results pages">
         <button
           type="button"
-          onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+          onClick={() => updateSearchParams({ page: Math.max(currentPage - 1, 1) })}
           disabled={currentPage === 1}
         >
           Previous
@@ -124,7 +211,7 @@ export default function ResultsPage() {
         <button
           type="button"
           onClick={() =>
-            setCurrentPage((page) => Math.min(page + 1, totalPages))
+            updateSearchParams({ page: Math.min(currentPage + 1, totalPages) })
           }
           disabled={currentPage === totalPages || visibleVehicles.length === 0}
         >

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { VehicleProvider } from "../context/VehicleContext";
 import type { Vehicle } from "../types/vehicle";
@@ -24,11 +24,18 @@ const testVehicles: Vehicle[] = [
   buildVehicle({ id: "8", make: "SEAT", model: "Ibiza", startingBid: 6500 }),
 ];
 
-function renderResultsPage() {
+function LocationDisplay() {
+  const location = useLocation();
+
+  return <output data-testid="location-display">{location.search}</output>;
+}
+
+function renderResultsPage(initialEntry = "/") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <VehicleProvider initialVehicles={testVehicles}>
         <ResultsPage />
+        <LocationDisplay />
       </VehicleProvider>
     </MemoryRouter>
   );
@@ -54,6 +61,9 @@ describe("ResultsPage", () => {
     expect(
       screen.queryByRole("heading", { level: 2, name: "Ford Focus" })
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId("location-display")).toHaveTextContent(
+      "make=Ford&model=Fie"
+    );
   });
 
   it("sorts vehicles by starting bid in descending order", async () => {
@@ -122,5 +132,48 @@ describe("ResultsPage", () => {
     expect(
       screen.queryByRole("heading", { level: 2, name: "Ford Fiesta" })
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId("location-display")).toHaveTextContent(
+      "pageSize=6&page=2"
+    );
+  });
+
+  it("hydrates filter, sort, and pagination state from the URL", () => {
+    renderResultsPage(
+      "/?make=Ford&sort=startingBid&direction=desc&pageSize=6&page=1"
+    );
+
+    expect(screen.getByLabelText(/make filter/i)).toHaveValue("Ford");
+    expect(screen.getByLabelText(/sort field/i)).toHaveValue("startingBid");
+    expect(screen.getByLabelText(/sort direction/i)).toHaveValue("desc");
+    expect(screen.getByLabelText(/vehicles per page/i)).toHaveValue("6");
+    expect(getVehicleTitles()[0]).toBe("Ford Focus");
+    expect(screen.getByText("Showing 2 of 8 vehicles")).toBeInTheDocument();
+  });
+
+  it("shows an empty state for filter combinations with no matches", async () => {
+    const user = userEvent.setup();
+
+    renderResultsPage();
+
+    await user.type(screen.getByLabelText(/minimum bid/i), "30000");
+
+    expect(
+      screen.getByText("No vehicles match the current filters.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Showing 0 of 8 vehicles")).toBeInTheDocument();
+    expect(screen.getByText("No pages available")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+  });
+
+  it("falls back safely when URL params are invalid", () => {
+    renderResultsPage(
+      "/?sort=not-a-real-sort&direction=sideways&pageSize=999&page=-4&favouritesOnly=maybe"
+    );
+
+    expect(screen.getByLabelText(/sort field/i)).toHaveValue("auctionDateTime");
+    expect(screen.getByLabelText(/sort direction/i)).toHaveValue("asc");
+    expect(screen.getByLabelText(/vehicles per page/i)).toHaveValue("12");
+    expect(screen.getByRole("checkbox", { name: /favourites only/i })).not.toBeChecked();
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
   });
 });

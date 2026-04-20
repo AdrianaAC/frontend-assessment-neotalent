@@ -82,4 +82,13 @@ describe("App routing", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Favourite")).toBeInTheDocument();
   });
+
+  it("shows a not-found state for an unknown vehicle route", () => {
+    renderApp("/vehicle/does-not-exist");
+
+    expect(screen.getByText("Vehicle not found.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /back to results/i })
+    ).toBeInTheDocument();
+  });
 });

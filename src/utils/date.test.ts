@@ -6,10 +6,10 @@ import { parseAuctionDate } from "./auctionDate";
 describe("getAuctionCountdownLabel", () => {
   it("returns a less-than-one-hour label before the auction starts", () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-20T11:30:00"));
+    vi.setSystemTime(parseAuctionDate("2026-04-20T11:30:00"));
 
     expect(getAuctionCountdownLabel("2026-04-20T12:00:00")).toBe(
-      "Less than 1 hour"
+      "Less than 1 hour",
     );
 
     vi.useRealTimers();
@@ -17,10 +17,10 @@ describe("getAuctionCountdownLabel", () => {
 
   it("returns a live label once the auction has started", () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-20T12:30:00"));
+    vi.setSystemTime(parseAuctionDate("2026-04-20T12:30:00"));
 
     expect(getAuctionCountdownLabel("2026-04-20T12:00:00")).toBe(
-      "Auction is live"
+      "Auction is live",
     );
 
     vi.useRealTimers();
@@ -28,10 +28,10 @@ describe("getAuctionCountdownLabel", () => {
 
   it("parses auction times in the auction timezone instead of browser local time", () => {
     expect(parseAuctionDate("2026-04-20T12:00:00").toISOString()).toBe(
-      "2026-04-20T11:00:00.000Z"
+      "2026-04-20T11:00:00.000Z",
     );
     expect(parseAuctionDate("2026-12-20T12:00:00").toISOString()).toBe(
-      "2026-12-20T12:00:00.000Z"
+      "2026-12-20T12:00:00.000Z",
     );
   });
 

@@ -11,17 +11,22 @@ export default function VehicleDetailsPage() {
   const { vehicles, toggleFavourite } = useVehicles();
   const vehicle = vehicles.find((item) => item.id === id);
 
-  if (!vehicle) {
-    return (
-      <main className="page">
+      if (!vehicle) {
+        return (
+      <main id="main-content" className="page">
         <p>Vehicle not found.</p>
         <Link to="/">Back to results</Link>
       </main>
     );
   }
 
+  const vehicleName = `${vehicle.make} ${vehicle.model}`;
+  const favouriteLabel = vehicle.favourite
+    ? `Remove ${vehicleName} from favourites`
+    : `Add ${vehicleName} to favourites`;
+
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <Link to="/" className="back-link">
         Back to results
       </Link>
@@ -49,6 +54,8 @@ export default function VehicleDetailsPage() {
               type="button"
               className={`favourite-btn details-favourite-btn${vehicle.favourite ? " favourite-btn--active" : ""}`}
               onClick={() => toggleFavourite(vehicle.id)}
+              aria-pressed={vehicle.favourite}
+              aria-label={favouriteLabel}
             >
               {vehicle.favourite
                 ? "Remove from favourites"

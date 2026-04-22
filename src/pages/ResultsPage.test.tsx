@@ -48,8 +48,9 @@ function renderResultsPage(initialEntry = "/") {
 }
 
 function getVehicleTitles() {
-  return screen
-    .getAllByRole("heading", { level: 2 })
+  return within(screen.getByRole("region", { name: /vehicle listing/i }))
+    .getAllByRole("heading", { level: 3 })
+    .filter((heading) => heading.closest(".vehicle-card"))
     .map((heading) => heading.textContent);
 }
 
@@ -59,13 +60,13 @@ describe("ResultsPage", () => {
 
     renderResultsPage();
 
-    await user.selectOptions(screen.getByLabelText(/make filter/i), "Ford");
-    await user.type(screen.getByLabelText(/model filter/i), "Fie");
+    await user.selectOptions(screen.getByLabelText(/^make$/i), "Ford");
+    await user.type(screen.getByLabelText(/^model$/i), "Fie");
 
     expect(screen.getByText("Showing 1 of 8 vehicles")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Ford Fiesta" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Ford Fiesta" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { level: 2, name: "Ford Focus" })
+      screen.queryByRole("heading", { level: 3, name: "Ford Focus" })
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("location-display")).toHaveTextContent(
       "make=Ford&model=Fie"
@@ -77,10 +78,30 @@ describe("ResultsPage", () => {
 
     renderResultsPage();
 
-    await user.selectOptions(screen.getByLabelText(/sort field/i), "startingBid");
-    await user.selectOptions(screen.getByLabelText(/sort direction/i), "desc");
+    await user.selectOptions(screen.getByLabelText(/sort by/i), "startingBid");
+    await user.selectOptions(screen.getByLabelText(/direction/i), "desc");
 
     expect(getVehicleTitles()[0]).toBe("Tesla Model 3");
+  });
+
+  it("exposes the main results landmarks with section headings", () => {
+    renderResultsPage();
+
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Vehicle Results" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Filters" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Sort Results" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Available Vehicles" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "BMW 320d" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /filters/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /sort results/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /available vehicles/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /vehicle listing/i })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /pagination/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /go to previous page/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /go to next page/i })).toBeInTheDocument();
   });
 
   it("updates favourites and supports filtering to favourites only", async () => {
@@ -89,30 +110,30 @@ describe("ResultsPage", () => {
     renderResultsPage();
 
     const bmwCard = screen
-      .getByRole("heading", { level: 2, name: "BMW 320d" })
+      .getByRole("heading", { level: 3, name: "BMW 320d" })
       .closest(".vehicle-card");
 
     expect(bmwCard).not.toBeNull();
 
     await user.click(
       within(bmwCard as HTMLElement).getByRole("button", {
-        name: /add to favourites/i,
+        name: /add bmw 320d to favourites/i,
       })
     );
 
     expect(
       within(bmwCard as HTMLElement).getByRole("button", {
-        name: /remove from favourites/i,
+        name: /remove bmw 320d from favourites/i,
       })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("checkbox", { name: /favourites only/i }));
 
     expect(screen.getByText("Showing 2 of 8 vehicles")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Audi A3" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "BMW 320d" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Audi A3" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "BMW 320d" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { level: 2, name: "Ford Fiesta" })
+      screen.queryByRole("heading", { level: 3, name: "Ford Fiesta" })
     ).not.toBeInTheDocument();
   });
 
@@ -126,17 +147,17 @@ describe("ResultsPage", () => {
     expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
     expect(getVehicleTitles()).toHaveLength(6);
     expect(
-      screen.queryByRole("heading", { level: 2, name: "SEAT Ibiza" })
+      screen.queryByRole("heading", { level: 3, name: "SEAT Ibiza" })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
     expect(getVehicleTitles()).toHaveLength(2);
-    expect(screen.getByRole("heading", { level: 2, name: "Renault Clio" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "SEAT Ibiza" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Renault Clio" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "SEAT Ibiza" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { level: 2, name: "Ford Fiesta" })
+      screen.queryByRole("heading", { level: 3, name: "Ford Fiesta" })
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("location-display")).toHaveTextContent(
       "pageSize=6&page=2"
@@ -148,9 +169,9 @@ describe("ResultsPage", () => {
       "/?make=Ford&sort=startingBid&direction=desc&pageSize=6&page=1"
     );
 
-    expect(screen.getByLabelText(/make filter/i)).toHaveValue("Ford");
-    expect(screen.getByLabelText(/sort field/i)).toHaveValue("startingBid");
-    expect(screen.getByLabelText(/sort direction/i)).toHaveValue("desc");
+    expect(screen.getByLabelText(/^make$/i)).toHaveValue("Ford");
+    expect(screen.getByLabelText(/sort by/i)).toHaveValue("startingBid");
+    expect(screen.getByLabelText(/direction/i)).toHaveValue("desc");
     expect(screen.getByLabelText(/vehicles per page/i)).toHaveValue("6");
     expect(getVehicleTitles()[0]).toBe("Ford Focus");
     expect(screen.getByText("Showing 2 of 8 vehicles")).toBeInTheDocument();
@@ -161,7 +182,7 @@ describe("ResultsPage", () => {
 
     renderResultsPage();
 
-    await user.type(screen.getByLabelText(/minimum bid/i), "30000");
+    await user.type(screen.getByLabelText(/min bid/i), "30000");
 
     expect(
       screen.getByText("No vehicles match the current filters.")
@@ -176,8 +197,8 @@ describe("ResultsPage", () => {
       "/?sort=not-a-real-sort&direction=sideways&pageSize=999&page=-4&favouritesOnly=maybe"
     );
 
-    expect(screen.getByLabelText(/sort field/i)).toHaveValue("auctionDateTime");
-    expect(screen.getByLabelText(/sort direction/i)).toHaveValue("asc");
+    expect(screen.getByLabelText(/sort by/i)).toHaveValue("auctionDateTime");
+    expect(screen.getByLabelText(/direction/i)).toHaveValue("asc");
     expect(screen.getByLabelText(/vehicles per page/i)).toHaveValue("12");
     expect(screen.getByRole("checkbox", { name: /favourites only/i })).not.toBeChecked();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
@@ -188,10 +209,101 @@ describe("ResultsPage", () => {
 
     renderResultsPage("/?make=Ford&model=Focus");
 
-    await user.click(screen.getByRole("button", { name: /model: focus/i }));
+    await user.click(
+      screen.getByRole("button", { name: /clear model: focus filter/i })
+    );
 
-    expect(screen.getByLabelText(/model filter/i)).toHaveValue("");
-    expect(screen.getByRole("heading", { level: 2, name: "Ford Fiesta" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Ford Focus" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^model$/i)).toHaveValue("");
+    expect(screen.getByRole("heading", { level: 3, name: "Ford Fiesta" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Ford Focus" })).toBeInTheDocument();
+  });
+
+  it("keeps filters, clear chips, and vehicle links reachable with Tab", async () => {
+    const user = userEvent.setup();
+
+    renderResultsPage("/?make=Ford&model=Focus");
+
+    await user.tab();
+    expect(screen.getByLabelText(/^make$/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/^model$/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/min bid/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/max bid/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole("checkbox", { name: /favourites only/i })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: /clear filters/i })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: /clear make: ford filter/i })).toHaveFocus();
+
+    await user.tab();
+    const modelChip = screen.getByRole("button", {
+      name: /clear model: focus filter/i,
+    });
+    expect(modelChip).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/sort by/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/direction/i)).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText(/vehicles per page/i)).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("link", { name: /view details for ford focus/i })
+    ).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: /add ford focus to favourites/i })
+    ).toHaveFocus();
+
+    modelChip.focus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByLabelText(/^model$/i)).toHaveValue("");
+  });
+
+  it("keeps pagination controls reachable with Tab", async () => {
+    const user = userEvent.setup();
+
+    renderResultsPage("/?pageSize=6&page=2");
+
+    for (let step = 0; step < 10; step += 1) {
+      await user.tab();
+    }
+
+    expect(
+      screen.getByRole("link", { name: /view details for renault clio/i })
+    ).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: /add renault clio to favourites/i })
+    ).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("link", { name: /view details for seat ibiza/i })
+    ).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: /add seat ibiza to favourites/i })
+    ).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: /previous/i })).toHaveFocus();
   });
 });

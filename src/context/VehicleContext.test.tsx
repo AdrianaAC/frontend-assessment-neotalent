@@ -44,7 +44,7 @@ describe("VehicleContext persistence", () => {
     const firstRender = renderResultsWithPersistence();
 
     await user.click(
-      screen.getByRole("button", { name: /add to favourites/i })
+      screen.getByRole("button", { name: /add ford fiesta to favourites/i })
     );
 
     expect(
@@ -58,7 +58,7 @@ describe("VehicleContext persistence", () => {
     renderResultsWithPersistence();
 
     expect(
-      screen.getByRole("button", { name: /remove from favourites/i })
+      screen.getByRole("button", { name: /remove ford fiesta from favourites/i })
     ).toBeInTheDocument();
     expect(screen.getByText(/1 favourites saved on this device/i)).toBeInTheDocument();
   });

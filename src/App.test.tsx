@@ -54,6 +54,15 @@ function renderApp(initialEntry = "/") {
 }
 
 describe("App routing", () => {
+  it("renders a skip link that targets the main content", () => {
+    renderApp("/");
+
+    expect(
+      screen.getByRole("link", { name: /skip to main content/i })
+    ).toHaveAttribute("href", "#main-content");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
+  });
+
   it("navigates from the results page to the vehicle details page", async () => {
     const user = userEvent.setup();
 
@@ -76,7 +85,7 @@ describe("App routing", () => {
     renderApp("/vehicle/bmw-320d-2019-0");
 
     await user.click(
-      screen.getByRole("button", { name: /add to favourites/i })
+      screen.getByRole("button", { name: /add bmw 320d to favourites/i })
     );
 
     expect(screen.getByText("Saved")).toBeInTheDocument();
@@ -84,7 +93,7 @@ describe("App routing", () => {
     await user.click(screen.getByRole("link", { name: /back to results/i }));
 
     expect(
-      screen.getByRole("button", { name: /remove from favourites/i })
+      screen.getByRole("button", { name: /remove bmw 320d from favourites/i })
     ).toBeInTheDocument();
     expect(screen.getByText("Favourite")).toBeInTheDocument();
   });

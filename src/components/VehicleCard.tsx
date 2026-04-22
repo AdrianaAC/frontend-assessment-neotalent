@@ -14,10 +14,18 @@ type Props = {
 
 export default function VehicleCard({ vehicle, onToggleFavourite }: Props) {
   const auctionCountdown = getAuctionCountdownLabel(vehicle.auctionDateTime);
+  const vehicleName = `${vehicle.make} ${vehicle.model}`;
+  const favouriteLabel = vehicle.favourite
+    ? `Remove ${vehicleName} from favourites`
+    : `Add ${vehicleName} to favourites`;
 
   return (
     <div className="vehicle-card">
-      <Link to={`/vehicle/${vehicle.id}`} className="vehicle-card__link">
+      <Link
+        to={`/vehicle/${vehicle.id}`}
+        className="vehicle-card__link"
+        aria-label={`View details for ${vehicleName}`}
+      >
         <div className="vehicle-card__image">
           <div className="vehicle-card__image-overlay">
             <span className="vehicle-card__image-label">Image placeholder</span>
@@ -29,9 +37,9 @@ export default function VehicleCard({ vehicle, onToggleFavourite }: Props) {
           <div className="vehicle-card__header">
             <div>
               <p className="vehicle-card__eyebrow">{vehicle.make}</p>
-              <h2>
-                {vehicle.make} {vehicle.model}
-              </h2>
+              <h3>
+                {vehicleName}
+              </h3>
             </div>
             {vehicle.favourite ? (
               <span className="vehicle-card__badge">Favourite</span>
@@ -62,6 +70,10 @@ export default function VehicleCard({ vehicle, onToggleFavourite }: Props) {
               <dd>{auctionCountdown}</dd>
             </div>
           </dl>
+
+          <span className="vehicle-card__cta">
+            View details for {vehicleName}
+          </span>
         </div>
       </Link>
 
@@ -69,9 +81,8 @@ export default function VehicleCard({ vehicle, onToggleFavourite }: Props) {
         type="button"
         className={`favourite-btn${vehicle.favourite ? " favourite-btn--active" : ""}`}
         onClick={() => onToggleFavourite(vehicle.id)}
-        aria-label={
-          vehicle.favourite ? "Remove from favourites" : "Add to favourites"
-        }
+        aria-pressed={vehicle.favourite}
+        aria-label={favouriteLabel}
       >
         {vehicle.favourite ? "Saved to favourites" : "Save to favourites"}
       </button>

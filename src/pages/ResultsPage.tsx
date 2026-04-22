@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import FilterBar from "../components/FilterBar";
@@ -67,9 +67,40 @@ const FilterChip = styled.button`
   color: ${({ theme }) => theme.colors.chipText};
   cursor: pointer;
   font-weight: 600;
+
+  &:focus-visible {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.accent};
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  }
 `;
 
 const StatusNote = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.95rem;
+`;
+
+const PageSection = styled.section`
+  margin-top: 28px;
+`;
+
+const SectionHeader = styled.header`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+`;
+
+const SectionHeading = styled.h2`
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+`;
+
+const SectionNote = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.colors.textMuted};
   font-size: 0.95rem;
@@ -164,54 +195,57 @@ export default function ResultsPage() {
     [vehicles]
   );
 
-  function updateSearchParams(
+  const updateSearchParams = useCallback(
+    (
     updates: Partial<Filters> & {
       sort?: SortField;
       direction?: SortDirection;
       page?: number;
       pageSize?: number;
     }
-  ) {
-    const nextParams = new URLSearchParams(location.search);
+    ) => {
+      const nextParams = new URLSearchParams(location.search);
 
-    Object.entries(updates).forEach(([key, value]) => {
-      if (
-        value === undefined ||
-        value === "" ||
-        value === false ||
-        (key === "page" && value === 1) ||
-        (key === "pageSize" && value === 12) ||
-        (key === "sort" && value === "auctionDateTime") ||
-        (key === "direction" && value === "asc")
-      ) {
-        nextParams.delete(key);
-        return;
-      }
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === undefined ||
+          value === "" ||
+          value === false ||
+          (key === "page" && value === 1) ||
+          (key === "pageSize" && value === 12) ||
+          (key === "sort" && value === "auctionDateTime") ||
+          (key === "direction" && value === "asc")
+        ) {
+          nextParams.delete(key);
+          return;
+        }
 
-      nextParams.set(key, String(value));
-    });
+        nextParams.set(key, String(value));
+      });
 
-    navigate(
-      {
-        pathname: location.pathname,
-        search: nextParams.toString() ? `?${nextParams.toString()}` : "",
-      },
-      { replace: true }
-    );
-  }
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextParams.toString() ? `?${nextParams.toString()}` : "",
+        },
+        { replace: true }
+      );
+    },
+    [location.pathname, location.search, navigate]
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) {
       updateSearchParams({ page: totalPages });
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, updateSearchParams]);
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <header className="page-header">
         <h1>Vehicle Results</h1>
         <HeaderMeta>
-          <p>
+          <p aria-live="polite" aria-atomic="true">
             Showing {visibleVehicles.length} of {totalVehicles} vehicles
           </p>
           <HeaderBadge>
@@ -223,105 +257,134 @@ export default function ResultsPage() {
         </StatusNote>
       </header>
 
-      <FilterBar
-        filters={filters}
-        makes={makes}
-        onChange={(nextFilters) => updateSearchParams({ ...nextFilters, page: 1 })}
-        onClear={() => navigate({ pathname: location.pathname, search: "" }, { replace: true })}
-      />
+      <PageSection aria-labelledby="filters-heading">
+        <SectionHeader>
+          <SectionHeading id="filters-heading">Filters</SectionHeading>
+          <SectionNote>Narrow the catalogue by make, model, bid, or favourites.</SectionNote>
+        </SectionHeader>
 
-      <SortControls
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onFieldChange={(value) => updateSearchParams({ sort: value, page: 1 })}
-        onDirectionChange={(value) =>
-          updateSearchParams({ direction: value, page: 1 })
-        }
-      />
+        <FilterBar
+          filters={filters}
+          makes={makes}
+          onChange={(nextFilters) => updateSearchParams({ ...nextFilters, page: 1 })}
+          onClear={() => navigate({ pathname: location.pathname, search: "" }, { replace: true })}
+        />
 
-      {activeFilters.length > 0 ? (
-        <ActiveFilters aria-label="Active filters">
-          {activeFilters.map((filter) => (
-            <FilterChip
-              key={filter.key}
-              type="button"
-              onClick={() =>
+        {activeFilters.length > 0 ? (
+          <ActiveFilters aria-label="Active filters">
+            {activeFilters.map((filter) => (
+              <FilterChip
+                key={filter.key}
+                type="button"
+                aria-label={`Clear ${filter.label} filter`}
+                onClick={() =>
+                  updateSearchParams({
+                    [filter.key]:
+                      filter.key === "favouritesOnly" ? false : "",
+                    page: 1,
+                  } as Partial<Filters> & { page: number })
+                }
+              >
+                {filter.label}
+                <span aria-hidden="true">x</span>
+              </FilterChip>
+            ))}
+          </ActiveFilters>
+        ) : null}
+      </PageSection>
+
+      <PageSection aria-labelledby="sort-heading">
+        <SectionHeader>
+          <SectionHeading id="sort-heading">Sort Results</SectionHeading>
+          <SectionNote>Choose how vehicles are ordered before you browse.</SectionNote>
+        </SectionHeader>
+
+        <SortControls
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onFieldChange={(value) => updateSearchParams({ sort: value, page: 1 })}
+          onDirectionChange={(value) =>
+            updateSearchParams({ direction: value, page: 1 })
+          }
+        />
+      </PageSection>
+
+      <PageSection aria-labelledby="results-heading">
+        <SectionHeader>
+          <SectionHeading id="results-heading">Available Vehicles</SectionHeading>
+          <SectionNote>Browse the current page of matching vehicles.</SectionNote>
+        </SectionHeader>
+
+        <div className="pagination-toolbar">
+          <div className="pagination-toolbar__field">
+            <label className="pagination-toolbar__label" htmlFor="page-size">
+              Vehicles per page
+            </label>
+            <select
+              id="page-size"
+              value={vehiclesPerPage}
+              onChange={(event) =>
                 updateSearchParams({
-                  [filter.key]:
-                    filter.key === "favouritesOnly" ? false : "",
+                  pageSize: Number(event.target.value),
                   page: 1,
-                } as Partial<Filters> & { page: number })
+                })
               }
             >
-              {filter.label}
-              <span aria-hidden="true">×</span>
-            </FilterChip>
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+            </select>
+          </div>
+
+          <p className="pagination-toolbar__summary">
+            Page {currentPage} of {totalPages}
+          </p>
+        </div>
+
+        <section className="vehicle-grid" aria-label="Vehicle listing">
+          {visibleVehicles.length === 0 ? (
+            <p className="empty-state">No vehicles match the current filters.</p>
+          ) : null}
+
+          {paginatedVehicles.map((vehicle) => (
+            <VehicleCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              onToggleFavourite={toggleFavourite}
+            />
           ))}
-        </ActiveFilters>
-      ) : null}
+        </section>
 
-      <section className="pagination-toolbar">
-        <label className="pagination-toolbar__label">
-          Vehicles per page
-          <select
-            value={vehiclesPerPage}
-            onChange={(event) =>
-              updateSearchParams({
-                pageSize: Number(event.target.value),
-                page: 1,
-              })
-            }
-          >
-            <option value={6}>6</option>
-            <option value={12}>12</option>
-            <option value={24}>24</option>
-          </select>
-        </label>
+        <footer>
+          <nav className="pagination" aria-label="Pagination">
+            <button
+              type="button"
+              aria-label="Go to previous page"
+              onClick={() => updateSearchParams({ page: Math.max(currentPage - 1, 1) })}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
 
-        <p className="pagination-toolbar__summary">
-          Page {currentPage} of {totalPages}
-        </p>
-      </section>
+            <span className="pagination__status">
+              {visibleVehicles.length === 0
+                ? "No pages available"
+                : `Viewing page ${currentPage} of ${totalPages}`}
+            </span>
 
-      <section className="vehicle-grid">
-        {visibleVehicles.length === 0 ? (
-          <p className="empty-state">No vehicles match the current filters.</p>
-        ) : null}
-
-        {paginatedVehicles.map((vehicle) => (
-          <VehicleCard
-            key={vehicle.id}
-            vehicle={vehicle}
-            onToggleFavourite={toggleFavourite}
-          />
-        ))}
-      </section>
-
-      <nav className="pagination" aria-label="Vehicle results pages">
-        <button
-          type="button"
-          onClick={() => updateSearchParams({ page: Math.max(currentPage - 1, 1) })}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-
-        <span className="pagination__status">
-          {visibleVehicles.length === 0
-            ? "No pages available"
-            : `Viewing page ${currentPage} of ${totalPages}`}
-        </span>
-
-        <button
-          type="button"
-          onClick={() =>
-            updateSearchParams({ page: Math.min(currentPage + 1, totalPages) })
-          }
-          disabled={currentPage === totalPages || visibleVehicles.length === 0}
-        >
-          Next
-        </button>
-      </nav>
+            <button
+              type="button"
+              aria-label="Go to next page"
+              onClick={() =>
+                updateSearchParams({ page: Math.min(currentPage + 1, totalPages) })
+              }
+              disabled={currentPage === totalPages || visibleVehicles.length === 0}
+            >
+              Next
+            </button>
+          </nav>
+        </footer>
+      </PageSection>
     </main>
   );
 }

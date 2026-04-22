@@ -4,9 +4,14 @@ import VehicleDetailsPage from "./pages/VehicleDetailsPage";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<ResultsPage />} />
-      <Route path="/vehicle/:id" element={<VehicleDetailsPage />} />
-    </Routes>
+    <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <Routes>
+        <Route path="/" element={<ResultsPage />} />
+        <Route path="/vehicle/:id" element={<VehicleDetailsPage />} />
+      </Routes>
+    </>
   );
 }

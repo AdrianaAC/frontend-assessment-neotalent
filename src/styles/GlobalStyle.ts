@@ -40,10 +40,38 @@ export const GlobalStyle = createGlobalStyle`
     text-decoration: none;
   }
 
+  .skip-link {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    padding: 12px 16px;
+    border-radius: ${({ theme }) => theme.radii.md};
+    background: #ffffff;
+    color: ${({ theme }) => theme.colors.accent};
+    border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    transform: translateY(-140%);
+    transition: transform 0.2s ease;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
   button,
   input,
   select {
     font: inherit;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
   }
 
   #root {
@@ -93,6 +121,13 @@ export const GlobalStyle = createGlobalStyle`
     box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
   }
 
+  .toolbar-field,
+  .pagination-toolbar__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
   .toolbar select,
   .toolbar input,
   .toolbar button,
@@ -114,14 +149,14 @@ export const GlobalStyle = createGlobalStyle`
     min-width: 180px;
   }
 
-  .toolbar select:focus,
-  .toolbar input:focus,
-  .toolbar button:focus,
-  .pagination-toolbar select:focus,
-  .pagination button:focus,
-  .favourite-btn:focus,
-  .back-link:focus {
-    outline: none;
+  .toolbar select:focus-visible,
+  .toolbar input:focus-visible,
+  .toolbar button:focus-visible,
+  .pagination-toolbar select:focus-visible,
+  .pagination button:focus-visible,
+  .favourite-btn:focus-visible,
+  .back-link:focus-visible,
+  .vehicle-card__link:focus-visible {
     border-color: ${({ theme }) => theme.colors.accent};
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
   }
@@ -146,15 +181,19 @@ export const GlobalStyle = createGlobalStyle`
     align-items: center;
   }
 
+  .toolbar-field > label,
+  .pagination-toolbar__label {
+    display: inline-block;
+    font-weight: 600;
+  }
+
   .pagination-toolbar {
     justify-content: space-between;
     margin: 22px 0 18px;
   }
 
   .pagination-toolbar__label {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    display: inline-block;
   }
 
   .pagination {
@@ -190,6 +229,7 @@ export const GlobalStyle = createGlobalStyle`
 
   .vehicle-card__link {
     display: block;
+    border-radius: ${({ theme }) => theme.radii.xl};
   }
 
   .vehicle-card__image,
@@ -268,14 +308,14 @@ export const GlobalStyle = createGlobalStyle`
     color: #f97316;
   }
 
-  .vehicle-card h2,
+  .vehicle-card h3,
   .details-card h1 {
     margin: 0;
     line-height: 1.1;
     letter-spacing: -0.03em;
   }
 
-  .vehicle-card h2 {
+  .vehicle-card h3 {
     font-size: 1.45rem;
   }
 
@@ -284,7 +324,8 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .vehicle-card__meta,
-  .details-card__subtitle {
+  .details-card__subtitle,
+  .vehicle-card__cta {
     margin-top: 14px;
     color: ${({ theme }) => theme.colors.textMuted};
   }
@@ -301,6 +342,14 @@ export const GlobalStyle = createGlobalStyle`
     background: ${({ theme }) => theme.colors.chipBg};
     color: ${({ theme }) => theme.colors.chipText};
     font-size: 0.88rem;
+  }
+
+  .vehicle-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.accent};
   }
 
   .vehicle-card__stats,
@@ -448,6 +497,11 @@ export const GlobalStyle = createGlobalStyle`
     .pagination-toolbar select,
     .pagination button,
     .details-favourite-btn {
+      width: 100%;
+    }
+
+    .toolbar-field,
+    .pagination-toolbar__field {
       width: 100%;
     }
 

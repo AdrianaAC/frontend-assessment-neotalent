@@ -31,19 +31,19 @@ This project implements a complete vehicle marketplace-style experience with:
 
 ### Results Page
 
-![Results Page](./images/results-page-placeholder.png)
+![Results Page](./resultsPage.png)
 
 ### Vehicle Details Page
 
-![Vehicle Details](./images/details-page-placeholder.png)
+![Vehicle Details](./vehiclePage.png)
 
 ### Mobile View
 
-![Mobile View](./images/mobile-placeholder.png)
+![Mobile View](./mobilePage.png)
 
 ### Demo GIF
 
-![Demo GIF](./images/demo-placeholder.gif)
+![Demo GIF](./demoGIF.gif)
 
 ---
 
@@ -149,100 +149,109 @@ Selected Vehicle by Stable Route ID
 ## Key Engineering Decisions
 
 ### Shared State via Context
+
 Vehicle data and favourites are centralized in VehicleContext.
 
 Why:
 
- - prevents duplicated page state
- - keeps results/details synchronized
- - scalable for future features
+- prevents duplicated page state
+- keeps results/details synchronized
+- scalable for future features
 
 ### URL-Persisted Results State
+
 Filters, sorting, page and page size live in query params.
 
 Why:
 
- - shareable searches
- - refresh-safe UX
- - native back/forward support
+- shareable searches
+- refresh-safe UX
+- native back/forward support
 
 ### Stable Vehicle Route IDs
+
 Vehicle routes use deterministic IDs derived from stable fields.
 
 Why:
 
- - safer than array index routes
- - more stable deep links
+- safer than array index routes
+- more stable deep links
 
 ### Timezone-Safe Auctions
+
 Auction timestamps are treated as Europe/London local auction times.
 
 Why:
 
- - prevents browser locale drift
- - ensures consistent countdowns across regions
+- prevents browser locale drift
+- ensures consistent countdowns across regions
 
 ### Automated Quality Checks
+
 GitHub Actions CI validates:
 
- - install
- - TypeScript
- - tests
- - production build
+- install
+- TypeScript
+- tests
+- production build
 
 ---
 
 ## Testing Strategy
+
 Built with Vitest + React Testing Library
 
 Current coverage includes:
 
- - filtering
- - sorting
- - favourites
- - pagination
- - vehicles per page
- - URL state hydration
- - details page rendering
- - shared state between routes
- - not-found route
- - countdown edge cases
- - timezone parsing
- - favourites persistence
+- filtering
+- sorting
+- favourites
+- pagination
+- vehicles per page
+- URL state hydration
+- details page rendering
+- shared state between routes
+- not-found route
+- countdown edge cases
+- timezone parsing
+- favourites persistence
 
 ---
 
 ## Accessibility Considerations
 
- - semantic page structure
- - button-based interactive controls
- - labelled form inputs
- - keyboard-friendly navigation
- - focus states
- - responsive layouts
+- semantic page structure
+- button-based interactive controls
+- labelled form inputs
+- keyboard-friendly navigation
+- focus states
+- responsive layouts
 
 ---
 
 ## Performance Considerations
 
- - Derived state computed efficiently
- - Lightweight Vite production build
- - No unnecessary global libraries
- - Clean component boundaries
+- Derived state computed efficiently
+- Lightweight Vite production build
+- No unnecessary global libraries
+- Clean component boundaries
 
 ---
 
 ## Trade-Offs / Assumptions
 
 ### Deterministic IDs vs Backend IDs
+
 Real systems should use backend IDs.
 For this challenge, deterministic IDs were chosen due to static JSON data.
 
 ### localStorage Scope
+
 Favourites are browser-local only.
 A real production system would sync favourites to a user account.
 
 ### Static JSON Dataset
+
 For the challenge brief, JSON import was used directly.
 Real systems would likely fetch via API with loading/error states.
 
@@ -250,38 +259,42 @@ Real systems would likely fetch via API with loading/error states.
 
 ## If Given More Time
 
- - richer animations/micro-interactions
- - improved accessibility audit
- - end-to-end testing
- - compare vehicles feature
- - saved searches
- - real vehicle imagery
- - backend persistence
- - advanced search filters
+- richer animations/micro-interactions
+- improved accessibility audit
+- end-to-end testing
+- compare vehicles feature
+- saved searches
+- real vehicle imagery
+- backend persistence
+- advanced search filters
 
- ---
+---
 
 ## Running
 
 ### Run Locally
+
 ```txt
 npm install
 npm run dev
 ```
 
 ### Run Tests
+
 ```txt
 npm run test
 ```
 
 ### Build Production Version
+
 ```txt
 npm run build
 ```
 
- ---
+---
 
 ## Repository Structure
+
 ```txt
 src/
  ├── components/
@@ -293,7 +306,7 @@ src/
  └── test/
 ```
 
- ---
+---
 
 ## Author
 
